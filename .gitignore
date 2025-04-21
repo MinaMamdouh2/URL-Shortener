@@ -1,1 +1,3 @@
 vendor
+# This line is used because I use "air" to hot reload my app, thus I discard that folder
+app/services/url-shortener-api/v1/tmp
