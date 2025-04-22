@@ -70,6 +70,18 @@ func run(log *zap.SugaredLogger) error {
 	}
 
 	// -------------------------------------------------------------------------
+	// App Starting
+
+	log.Info("starting service ", "version ", build)
+	defer log.Info("shutdown complete")
+
+	out, err := conf.String(&cfg)
+	if err != nil {
+		return fmt.Errorf("generating config for output: %w", err)
+	}
+	log.Info("startup", "config", out)
+
+	// -------------------------------------------------------------------------
 	// Shuting down protocol
 	shutdown := make(chan os.Signal, 1)
 	// We are waiting for "SIGINT" which is "Ctrl+c" or a "SIGTERM" which what
