@@ -12,10 +12,10 @@ tidy:
 	go mod vendor
 
 run-local:
-	go run app/services/url-shortener-api/main.go
+	./run-local.sh
 
 run-local-air:
-	cd app/services/url-shortener-api && air
+	./run-air.sh
 
 # ==============================================================================
 # Building containers
