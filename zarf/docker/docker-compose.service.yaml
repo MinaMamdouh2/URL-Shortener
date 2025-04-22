@@ -1,0 +1,7 @@
+services:
+  app:
+    image: MinaMamdouh2/service/url-shortener-api:0.0.1
+    container_name: url-shortener-service
+    restart: always
+    ports:
+      - '3000:3000'

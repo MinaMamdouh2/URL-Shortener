@@ -1,0 +1,40 @@
+# Build the Go Binary.
+FROM golang:1.24.2 AS url-shortener-api
+ENV CGO_ENABLED=0
+ARG BUILD_REF
+
+# IF not vendoring, create the service directory and the copy the module files first and then
+# download the dependencies. If this doesn't change, we won't need to do this
+# again in future builds.
+# RUN mkdir /service
+# COPY go.* /service/
+# WORKDIR /service
+# RUN go mod download
+
+#Copy the source code into the container.
+COPY . /service
+
+# Build the service binary.
+WORKDIR /service/app/services/url-shortener-api
+RUN go build -ldflags "-X main.build=${BUILD_REF}"
+
+# Run the Go Binary in Alpine.
+FROM alpine:3.21
+ARG BUILD_DATE
+ARG BUILD_REF
+
+
+# inside a container or inside a cluster
+RUN addgroup -g 1000 -S url-shortener && \
+  adduser -u 1000 -h /service -G url-shortener -S url-shortener
+COPY --from=url-shortener-api --chown=url-shortener:url-shortener /service/app/services/url-shortener-api/url-shortener-api /service/url-shortener-api
+WORKDIR /service
+USER url-shortener
+CMD ["./url-shortener-api"]
+
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+  org.opencontainers.image.title="url-shortener-api" \
+  org.opencontainers.image.authors="Mina Mamdouh <mina.mamdouh.farag@gmail.com>" \
+  org.opencontainers.image.source="https://github.com/MinaMamdouh2/URL-Shortener" \
+  org.opencontainers.image.revision="${BUILD_REF}" \
+  org.opencontainers.image.vendor="Mina Mamdouh"
