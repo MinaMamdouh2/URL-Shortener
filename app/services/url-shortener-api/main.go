@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	v1 "github.com/MinaMamdouh2/URL-Shortener/business/web/v1"
 	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/debug"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/logger"
 	"github.com/ardanlabs/conf/v3"
@@ -94,6 +95,12 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 	}
 	log.Info("startup", "config", out)
 
+	// Initializing shutdown channel
+	shutdown := make(chan os.Signal, 1)
+	// We are waiting for "SIGINT" which is "Ctrl+c" or a "SIGTERM" which what
+	// will get back from Kubernetes
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+
 	// When we are logging the config, this line of code takes the build information we are logging and also puts it
 	// into the metrics.
 	// Also this will automatically execute the init function for the expvar which adds an endpoint
@@ -137,17 +144,32 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 
 	log.Infow("startup", "status", "initializing V1 API support")
 
+	cfgMux := v1.APIMuxConfig{
+		Build:    build,
+		Shutdown: shutdown,
+		Log:      log,
+	}
+	apiMux := v1.APIMux(cfgMux)
+
 	// Here we are not going to use the function ListenAndServe, we are gonna construct an HTTP server value which
 	// has the method ListenAndServe which has the facilities for a load shedded shutdown.
 	// Also we are applying a standard library logger for any extra logging that might occur underneath the covers
 	// this is how the http is provided that support
 	api := http.Server{
-		Addr:         cfg.Web.APIHost,
-		Handler:      nil,
+		Addr: cfg.Web.APIHost,
+		// We need a MUX and we don't wanna use the http mux from the standard library because it is too bare bones
+		// basic. It is good for small simple things.
+		// NOTE: If your go service is not as fast as otherwise could be it is not the mux. Don't get crazy about mux
+		// performance.
+		// Here the server wants Handler of type http.Handler that is of type interface with one active behavior
+		// ServeHTTP takes ResponseWriter and a pointer "*Request" to the concrete type Request
+		// Any mux will have to implement this interface to be used.
+		Handler:      apiMux,
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		IdleTimeout:  cfg.Web.IdleTimeout,
-		ErrorLog:     zap.NewStdLog(log.Desugar()),
+		// We are converting a zap logger into a format that Go's standard library (http.Server) understands.
+		ErrorLog: zap.NewStdLog(log.Desugar()),
 	}
 
 	serverErrors := make(chan error, 1)
@@ -162,10 +184,6 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 
 	// -------------------------------------------------------------------------
 	// Shuting down protocol
-	shutdown := make(chan os.Signal, 1)
-	// We are waiting for "SIGINT" which is "Ctrl+c" or a "SIGTERM" which what
-	// will get back from Kubernetes
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
 	// Here we block onto 2 channels.
 	select {
