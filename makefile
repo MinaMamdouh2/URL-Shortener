@@ -12,10 +12,10 @@ tidy:
 	go mod vendor
 
 run-local:
-	./run-local.sh | go run app/tooling/logfmt/main.go -service=$(SERVICE_NAME)
+	./run-local.sh
 
 run-local-air:
-	./run-air.sh | go run app/tooling/logfmt/main.go -service=$(SERVICE_NAME)
+	./run-air.sh
 
 # ==============================================================================
 # Building containers
