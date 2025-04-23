@@ -115,14 +115,49 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 	// The "expvar" package also has an init function that add another endpoint for the default server mux.
 	// The problem is any package that you import can have an init function that adds endpoints to the default server mux.
 	// We should only be exposing endpoints that we know about "This is a security bug".
-
+	// Also we are launching a go routine to this point so we can listen and serve traffic on port 4000 for this mux.
+	// Technically, we are creating an orphan go routine once it is initialized there is no more tracking of this go
+	// routine.
+	// In other words, when this service shutdown, this go routine will be shutdown with extreme prejudice.
+	// Why we are doing this? because in this case there is nothing that is hurting the state of the service
+	// with this orphan, this orphan is just reading, profiling and metrics data.
+	// There is no reason to add extra complexity to ensure that it shuts down before the server shuts down.
+	// Why should we hold the service hostage for 30 secs when that cpu profile is not important.
 	go func() {
-		log.Info(ctx, "startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
+		log.Infow("startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
 		// Here people usually use http.DefaultServeMux instead of our "debug.Mux()" but as we explained above
 		// this is a security vulnerability
 		if err := http.ListenAndServe(cfg.Web.DebugHost, debug.Mux()); err != nil {
-			log.Error(ctx, "shutdown", "status", "debug v1 router closed", "host", cfg.Web.DebugHost, "msg", err)
+			log.Errorw("shutdown", "status", "debug v1 router closed", "host", cfg.Web.DebugHost, "ERROR", err)
 		}
+	}()
+
+	// -------------------------------------------------------------------------
+	// Start API Service
+
+	log.Infow("startup", "status", "initializing V1 API support")
+
+	// Here we are not going to use the function ListenAndServe, we are gonna construct an HTTP server value which
+	// has the method ListenAndServe which has the facilities for a load shedded shutdown.
+	// Also we are applying a standard library logger for any extra logging that might occur underneath the covers
+	// this is how the http is provided that support
+	api := http.Server{
+		Addr:         cfg.Web.APIHost,
+		Handler:      nil,
+		ReadTimeout:  cfg.Web.ReadTimeout,
+		WriteTimeout: cfg.Web.WriteTimeout,
+		IdleTimeout:  cfg.Web.IdleTimeout,
+		ErrorLog:     zap.NewStdLog(log.Desugar()),
+	}
+
+	serverErrors := make(chan error, 1)
+	// Here, we are gonna launch our go routine which is blocking on ListenAndServe again however this ListenAndServe
+	// can return an error on shutdown or while it is running, but we can receive this error on a second channel.
+	// At this point, we have 2 channels one to signal a shutdown "shutdown" and one to signal we have some sort of an
+	// error "serverErrors".
+	go func() {
+		log.Infow("startup", "status", "api router started", "host", api.Addr)
+		serverErrors <- api.ListenAndServe()
 	}()
 
 	// -------------------------------------------------------------------------
@@ -132,10 +167,24 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 	// will get back from Kubernetes
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
-	sig := <-shutdown
-
-	log.Infow("shutdown", "status", "shutdown started", "signal", sig)
-	defer log.Infow("shutdown", "status", "shutdown completed", "signal", sig)
-
+	// Here we block onto 2 channels.
+	select {
+	// Ideally, we should never receive a signal on this case.
+	case err := <-serverErrors:
+		return fmt.Errorf("server error: %w", err)
+	// We do want to receive signals on shutdown.
+	case sig := <-shutdown:
+		log.Infow("shutdown", "status", "shutdown started", "signal", sig)
+		defer log.Infow("shutdown", "status", "shutdown complete", "signal", sig)
+		// Here we construct a new context with the shutdownTimeout and then we call shutdown api from our server value.
+		ctx, cancel := context.WithTimeout(ctx, cfg.Web.ShutdownTimeout)
+		defer cancel()
+		// we are using the context here so we don't wait for graceful shutdown forever.
+		// If we exceeds this timeout we are gonna kill the remaining go routines.
+		if err := api.Shutdown(ctx); err != nil {
+			api.Close()
+			return fmt.Errorf("could not stop server gracefully: %w", err)
+		}
+	}
 	return nil
 }
