@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/MinaMamdouh2/URL-Shortener/app/services/url-shortener-api/v1/handlers"
 	v1 "github.com/MinaMamdouh2/URL-Shortener/business/web/v1"
 	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/debug"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/logger"
@@ -149,7 +150,10 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 		Shutdown: shutdown,
 		Log:      log,
 	}
-	apiMux := v1.APIMux(cfgMux)
+	// We call the v1.APIMux which needs "v1.APIMuxConfig" and a concrete value that implements "RouteAdder"
+	// "handlers.Routes{}" implements the Add function, it's Add function gets called in "v1.APIMux" in which
+	// it calls "hackgrp.Routes(router)" which registers the routes to the router
+	apiMux := v1.APIMux(cfgMux, handlers.Routes{})
 
 	// Here we are not going to use the function ListenAndServe, we are gonna construct an HTTP server value which
 	// has the method ListenAndServe which has the facilities for a load shedded shutdown.
