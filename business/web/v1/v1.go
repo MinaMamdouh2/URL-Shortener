@@ -1,10 +1,9 @@
 package v1
 
 import (
-	"net/http"
 	"os"
 
-	"github.com/gin-gonic/gin"
+	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
 	"go.uber.org/zap"
 )
 
@@ -22,7 +21,7 @@ type APIMuxConfig struct {
 // RouteAdder defines behavior that sets the routes to bind for an instance
 // of the service.
 type RouteAdder interface {
-	Add(router *gin.Engine, cfg APIMuxConfig)
+	Add(app *web.App, cfg APIMuxConfig)
 }
 
 // WebAPI constructs a http.Handler with all application routes bound.
@@ -34,10 +33,18 @@ type RouteAdder interface {
 // We should return the concrete type and let the caller decide if it needs to abstract that or not.
 // Now we are passing the config and pass it some concrete value that knows how to Add "routeAdder", this creates a level
 // of abstraction here and "routeAdder" is going to call Add passing in the mux we wanna bind the route to and the config.
-func APIMux(cfg APIMuxConfig, routeAdder RouteAdder) http.Handler {
-	router := gin.New()
+// We added the RouteAdder interface to add the ability to isolate the routes that are being added to the mux at the
+// group level but also it gives you the ability to build different binaries for different sets of routes eventually.
+// Once we created the web package in the foundation layer, the app embeds a mux so it's APIs are promoted up to the app.
+// Now we can initialize the app here and return a pointer to it.
+// Also by constructing the web app we sort of hidden the implementation of the mux we are using.
+// This will later let us rip out the gin mux and going to use the standard library mux because we are gonna create that
+// abstraction.
+// Notice we are not creating an abstraction to an interface we are creating an abstraction to the concrete type.
+func APIMux(cfg APIMuxConfig, routeAdder RouteAdder) *web.App {
+	app := web.NewApp(cfg.Shutdown)
 
-	routeAdder.Add(router, cfg)
+	routeAdder.Add(app, cfg)
 
-	return router
+	return app
 }
