@@ -1,12 +1,19 @@
 package hackgrp
 
 import (
-	"github.com/gin-gonic/gin"
+	"context"
+	"encoding/json"
+	"net/http"
 )
 
 // Hack handles the /hack route using Gin context.
-func Hack(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"Status": "Ok",
-	})
+func Hack(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
+	status := struct {
+		Status string
+	}{
+		Status: "Ok",
+	}
+
+	return json.NewEncoder(w).Encode(status)
 }
