@@ -3,6 +3,7 @@ package v1
 import (
 	"os"
 
+	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/mid"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
 	"go.uber.org/zap"
 )
@@ -42,7 +43,7 @@ type RouteAdder interface {
 // abstraction.
 // Notice we are not creating an abstraction to an interface we are creating an abstraction to the concrete type.
 func APIMux(cfg APIMuxConfig, routeAdder RouteAdder) *web.App {
-	app := web.NewApp(cfg.Shutdown)
+	app := web.NewApp(cfg.Shutdown, mid.Logger(cfg.Log))
 
 	routeAdder.Add(app, cfg)
 
