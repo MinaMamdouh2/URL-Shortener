@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
 	"go.uber.org/zap"
@@ -29,18 +30,21 @@ func Logger(log *zap.SugaredLogger) web.Middleware {
 			// 2- will see it above
 
 			// Logging HERE - STARTED
+			v := web.GetValues(ctx)
 			path := r.URL.Path
 			if r.URL.RawQuery != "" {
 				path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
 			}
 
-			log.Infow("request started", "method", r.Method, "path", path, "remoteaddr", r.RemoteAddr)
+			log.Infow("request started", "method", r.Method, "path", path, "remoteaddr", r.RemoteAddr,
+				"traceID", v.TraceID)
 
 			// Call the next handler
 			err := handler(ctx, w, r)
 
 			// Logging HERE - COMPLETED
-			log.Infow("request completed", "method", r.Method, "path", path, "remoteaddr", r.RemoteAddr)
+			log.Infow("request completed", "method", r.Method, "path", path, "remoteaddr", r.RemoteAddr,
+				"traceID", v.TraceID, "statuscode", v.StatusCode, "since", time.Since(v.Now).String())
 
 			return err
 		}
