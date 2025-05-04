@@ -9,6 +9,8 @@ import (
 // Respond converts a Go value to JSON and sends it to the client.
 // We added Respond that knows how to do the http related stuff for responding
 func Respond(ctx context.Context, w http.ResponseWriter, data any, statusCode int) error {
+	setStatusCode(ctx, statusCode)
+
 	// If the response is 204 No Content, the HTTP spec says you must not include a response body
 	// So we only set the status code and exit
 	if statusCode == http.StatusNoContent {
