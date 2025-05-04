@@ -4,8 +4,10 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // A Handler is a type that handles a http request within our own little mini framework.
@@ -62,7 +64,14 @@ func (a *App) Handle(method string, path string, handler Handler, mw ...Middlewa
 		// you can't because the moment you do that this code is no longer reusable for anybody unless they are using
 		// the same logger. So we need a way for injecting middleware but a middleware that can exist anywhere in the
 		// application so the code we are injecting is following the proper rules and guidelines and idioms.
-		if err := handler(c.Request.Context(), c.Writer, c.Request); err != nil {
+		v := Values{
+			TraceID: uuid.NewString(),
+			Now:     time.Now().UTC(),
+		}
+
+		ctx := setValues(c.Request.Context(), &v)
+
+		if err := handler(ctx, c.Writer, c.Request); err != nil {
 			// Handle error: could enhance this to log, metrics, etc.
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
