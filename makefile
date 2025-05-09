@@ -30,3 +30,8 @@ build-service-image:
 docker-compose-up: build-service-image
 	docker compose \
 	-f "zarf\docker\docker-compose.service.yaml" up 
+
+
+# ==============================================================================
+load:
+	hey -m GET -c 100 -n 10000 "http://localhost:3000/hack"
