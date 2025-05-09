@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/metrics"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
 )
 
@@ -27,6 +28,8 @@ func Panics() web.Middleware {
 					trace := debug.Stack()
 					// We are going to return the error from the defer by using the named return.
 					err = fmt.Errorf("PANIC [%v] TRACE[%s]", rec, string(trace))
+
+					metrics.AddPanics(ctx)
 				}
 			}()
 			// This is the call to our handler, before this call we are setting our defer which it's job to call the
