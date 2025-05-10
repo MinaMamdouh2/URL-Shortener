@@ -35,3 +35,7 @@ docker-compose-up: build-service-image
 # ==============================================================================
 load:
 	hey -m GET -c 100 -n 10000 "http://localhost:3000/hack"
+
+# ==============================================================================
+generate-token:
+	go run app\tooling\token\main.go
