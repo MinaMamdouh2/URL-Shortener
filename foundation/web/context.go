@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+// Unexported type for injecting Gin param context into request context
+// This is done since I want to be able to use abstractions like "Param" which takes "r *http.Request"
+// making the helper route agnostic
+type ctxParamKey int
+
+const paramKey ctxParamKey = 1
+
 // Unexported type so we enforce people to use our API.
 type ctxKey int
 

@@ -36,6 +36,13 @@ type App struct {
 // a slice we can do that also these are the middlewares that we wanna route every single time.
 func NewApp(shutdown chan os.Signal, mw ...Middleware) *App {
 	engine := gin.New()
+	// This middleware is used to inject Gin’s c.Params into r.Context(), making the usage of helper functions
+	// as "Param" route agnostic since now it depends on r *http.Request not *gin.Context
+	engine.Use(func(c *gin.Context) {
+		ctx := context.WithValue(c.Request.Context(), paramKey, c.Params)
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	})
 	return &App{
 		Engine:   engine,
 		shutdown: shutdown,
