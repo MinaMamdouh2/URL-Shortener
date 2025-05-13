@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -214,12 +215,11 @@ func (a *Auth) publicKeyLookup(kid string) (string, error) {
 }
 
 func adminOnly(claims Claims) error {
-	for _, v := range claims.Roles {
-		if v == "admin_only" {
-			return nil
-		}
+	ok := slices.Contains(claims.Roles, RuleAdminOnly)
+	if !ok {
+		return ErrForbidden
 	}
-	return ErrForbidden
+	return nil
 }
 
 // isUserEnabled hits the database and checks the user is not disabled. If the
