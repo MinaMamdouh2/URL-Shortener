@@ -14,7 +14,9 @@ import (
 
 	"github.com/MinaMamdouh2/URL-Shortener/app/services/url-shortener-api/v1/handlers"
 	v1 "github.com/MinaMamdouh2/URL-Shortener/business/web/v1"
+	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/auth"
 	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/debug"
+	"github.com/MinaMamdouh2/URL-Shortener/foundation/keystore"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/logger"
 	"github.com/ardanlabs/conf/v3"
 	"go.uber.org/zap"
@@ -67,6 +69,11 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 			DebugHost          string        `conf:"default:0.0.0.0:4000,mask"`
 			CORSAllowedOrigins []string      `conf:"default:*"`
 		}
+		Auth struct {
+			KeysFolder string `conf:"default:../../../zarf/keys/"`
+			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
+			Issuer     string `conf:"default:service project"`
+		}
 	}{
 		Version: conf.Version{
 			Build: build,
@@ -101,6 +108,26 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 	// We are waiting for "SIGINT" which is "Ctrl+c" or a "SIGTERM" which what
 	// will get back from Kubernetes
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+
+	// -------------------------------------------------------------------------
+	// Initialize authentication support
+
+	log.Info("startup", "status", "initializing authentication support")
+
+	ks, err := keystore.NewFS(os.DirFS(cfg.Auth.KeysFolder))
+	if err != nil {
+		return fmt.Errorf("reading keys: %w", err)
+	}
+
+	authCfg := auth.Config{
+		Log:       log,
+		KeyLookup: ks,
+	}
+
+	auth, err := auth.New(authCfg)
+	if err != nil {
+		return fmt.Errorf("constructing auth: %w", err)
+	}
 
 	// When we are logging the config, this line of code takes the build information we are logging and also puts it
 	// into the metrics.
@@ -149,6 +176,7 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 		Build:    build,
 		Shutdown: shutdown,
 		Log:      log,
+		Auth:     auth,
 	}
 	// We call the v1.APIMux which needs "v1.APIMuxConfig" and a concrete value that implements "RouteAdder"
 	// "handlers.Routes{}" implements the Add function, it's Add function gets called in "v1.APIMux" in which
