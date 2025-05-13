@@ -51,7 +51,6 @@ func NewMap(store map[string]PrivateKey) *KeyStore {
 // Example: /zarf/keys/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem
 // fsys fs.FS is any file‐system abstraction (e.g., os.DirFS("/keys") or an embedded FS).
 func NewFS(fsys fs.FS) (*KeyStore, error) {
-
 	ks := New()
 	// Define a walk‐callback fn that will be called for every file or directory under fsys.
 	// It receives: fileName (path relative to the root, e.g. "54bb…c1.pem")
