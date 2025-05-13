@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/auth"
 	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/response"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
 	"go.uber.org/zap"
@@ -39,7 +40,11 @@ func Errors(log *zap.SugaredLogger) web.Middleware {
 					Error: reqErr.Error(),
 				}
 				status = reqErr.Status
-
+			case auth.IsAuthError(err):
+				er = response.ErrorDocument{
+					Error: http.StatusText(http.StatusUnauthorized),
+				}
+				status = http.StatusUnauthorized
 			// We don't know what the error is, it is a non trusted error
 			default:
 				er = response.ErrorDocument{
