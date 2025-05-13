@@ -3,6 +3,7 @@ package v1
 import (
 	"os"
 
+	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/auth"
 	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/mid"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
 	"go.uber.org/zap"
@@ -16,7 +17,8 @@ type APIMuxConfig struct {
 	Shutdown chan os.Signal
 	// Used pointer semantics here since, loggers carry state (e.g. log levels, output targets, etc.)
 	// Passing by pointer ensures we are sharing the same logger instance across the app.
-	Log *zap.SugaredLogger
+	Log  *zap.SugaredLogger
+	Auth *auth.Auth
 }
 
 // RouteAdder defines behavior that sets the routes to bind for an instance
