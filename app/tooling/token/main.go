@@ -100,7 +100,7 @@ func getPrivateKey() (*rsa.PrivateKey, error) {
 		}
 	}
 	// Path is relative to the project root, since I am running the main from the root folder
-	privatekeyFilePath := filepath.Join("zarf", "keys", "private.pem")
+	privatekeyFilePath := filepath.Join("zarf", "keys", "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem")
 
 	// Check if the file exists by opening it
 	privateKeyFile, err := os.Open(privatekeyFilePath)
@@ -143,7 +143,7 @@ func genKeyFiles() error {
 	}
 
 	// Create a file for the private key information in PEM form.
-	privateKeyFilePath := filepath.Join("zarf", "keys", "private.pem")
+	privateKeyFilePath := filepath.Join("zarf", "keys", "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem")
 	privateFile, err := os.Create(privateKeyFilePath)
 	if err != nil {
 		return fmt.Errorf("creating private file: %w", err)
@@ -162,35 +162,7 @@ func genKeyFiles() error {
 		return fmt.Errorf("encoding to private file: %w", err)
 	}
 
-	// =========================================================================
-	// Public Key
-
-	// Create a file for the public key information in PEM form.
-	publicKeyFilePath := filepath.Join("zarf", "keys", "public.pem")
-	publicFile, err := os.Create(publicKeyFilePath)
-	if err != nil {
-		return fmt.Errorf("creating public file: %w", err)
-	}
-	defer publicFile.Close()
-
-	// Marshal the public key from the private key to PKIX.
-	asn1Bytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		return fmt.Errorf("marshaling public key: %w", err)
-	}
-
-	// Construct a PEM block for the public key.
-	publicBlock := pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: asn1Bytes,
-	}
-
-	// Write the public key to the public key file.
-	if err := pem.Encode(publicFile, &publicBlock); err != nil {
-		return fmt.Errorf("encoding to public file: %w", err)
-	}
-
-	fmt.Println("private and public key files generated")
+	fmt.Println("private key files generated")
 
 	return nil
 }
