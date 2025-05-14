@@ -33,7 +33,7 @@ type ruleFn func(claims Claims) error
 
 // ruleFns maps rule names (as passed into Authorize) to their Go implementations.
 var ruleFns = map[string]ruleFn{
-	"admin_only": adminOnly,
+	RuleAdminOnly: adminOnly,
 }
 
 // KeyLookup declares a method set of behavior for looking up private and public keys for JWT use.
@@ -75,6 +75,7 @@ func New(cfg Config) (*Auth, error) {
 		method:    jwt.GetSigningMethod(jwt.SigningMethodRS256.Name),
 		parser:    jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Name})),
 		issuer:    cfg.Issuer,
+		cache:     make(map[string]string),
 	}
 
 	return &a, nil
@@ -215,7 +216,7 @@ func (a *Auth) publicKeyLookup(kid string) (string, error) {
 }
 
 func adminOnly(claims Claims) error {
-	ok := slices.Contains(claims.Roles, RuleAdminOnly)
+	ok := slices.Contains(claims.Roles, "ADMIN")
 	if !ok {
 		return ErrForbidden
 	}
