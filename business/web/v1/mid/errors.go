@@ -23,7 +23,7 @@ func Errors(log *zap.SugaredLogger) web.Middleware {
 				return nil
 			}
 			// First thing is to log the error
-			log.Error(ctx, "message", "msg", err)
+			log.Errorw("message", "msg", err)
 			// Second construct the error document that we are gonna send back and what status that we are gonna use.
 			var er response.ErrorDocument
 			var status int
