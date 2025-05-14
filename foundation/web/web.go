@@ -56,7 +56,7 @@ func NewApp(shutdown chan os.Signal, mw ...Middleware) *App {
 // and it is saying Bill I don't want your mux handle signature I want the App Handle signature this was the case for
 // 'httptreemux" but we are using gin so this is not the current case.
 // We added a variadic parameter mw here, this is for middlewares used for a particular route like authentication.
-func (a *App) Handle(method string, path string, handler Handler, mw ...Middleware) {
+func (a *App) Handle(method string, group string, path string, handler Handler, mw ...Middleware) {
 	// Now we are going to build the onion.
 	// Wrapping specific middlewares first
 	handler = wrapMiddleware(mw, handler)
@@ -94,9 +94,15 @@ func (a *App) Handle(method string, path string, handler Handler, mw ...Middlewa
 		// Add any logic here
 	}
 
+	// We are here constructing the final path
+	finalPath := path
+	if group != "" {
+		finalPath = "/" + group + path
+	}
+
 	// We can create all the abstraction in the world but at the end of the day what is implementing the mux is the
 	// the context mux
-	a.Engine.Handle(method, path, h)
+	a.Engine.Handle(method, finalPath, h)
 }
 
 // SignalShutdown is used to gracefully shut down the app when an integrity issue is identified.
