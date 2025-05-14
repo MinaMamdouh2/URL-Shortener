@@ -51,17 +51,31 @@ func NewApp(shutdown chan os.Signal, mw ...Middleware) *App {
 }
 
 // =============================================================================
-// Handle sets a handler function for a given HTTP method and path pair to the application server mux.
-// We now have overridden the mux's Handle method because now that the method exists that method overrides the promotion
-// and it is saying Bill I don't want your mux handle signature I want the App Handle signature this was the case for
-// 'httptreemux" but we are using gin so this is not the current case.
-// We added a variadic parameter mw here, this is for middlewares used for a particular route like authentication.
+// HandleNoMiddleware sets a handler function for a given HTTP method and path pair
+// to the application server mux. Does not include the application middleware.
+// The group in our case should be that "v1" because we might need to bind somethings under "v2" or some other grouping.
+func (a *App) HandleNoMiddleware(method string, group string, path string, handler Handler) {
+	a.handle(method, group, path, handler)
+}
+
 func (a *App) Handle(method string, group string, path string, handler Handler, mw ...Middleware) {
 	// Now we are going to build the onion.
 	// Wrapping specific middlewares first
 	handler = wrapMiddleware(mw, handler)
 	// Wrapping application level middlewares so they are called first.
 	handler = wrapMiddleware(a.mw, handler)
+
+	a.handle(method, group, path, handler)
+}
+
+// =============================================================================
+// Handle sets a handler function for a given HTTP method and path pair to the application server mux.
+// We now have overridden the mux's Handle method because now that the method exists that method overrides the promotion
+// and it is saying Bill I don't want your mux handle signature I want the App Handle signature this was the case for
+// 'httptreemux" but we are using gin so this is not the current case.
+// We added a variadic parameter mw here, this is for middlewares used for a particular route like authentication.
+func (a *App) handle(method string, group string, path string, handler Handler) {
+
 	// We know at the end of the day, we need a function that takes an Http response writer, and a pointer to http request
 	// in order to use the contextMux handle function
 	h := func(c *gin.Context) {
