@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
+	"go.uber.org/zap"
 )
 
 // Handlers manages the set of check endpoints.
@@ -19,12 +20,14 @@ import (
 // manage states as we need
 type Handlers struct {
 	build string
+	log   *zap.SugaredLogger
 }
 
 // New constructs a Handlers api for the check group.
-func New(build string) *Handlers {
+func New(build string, log *zap.SugaredLogger) *Handlers {
 	return &Handlers{
 		build: build,
+		log:   log,
 	}
 }
 
@@ -40,7 +43,7 @@ func (h *Handlers) Readiness(ctx context.Context, w http.ResponseWriter, r *http
 	}{
 		Status: status,
 	}
-
+	h.log.Infow("readiness", "status", status)
 	return web.Respond(ctx, w, data, statusCode)
 }
 
@@ -77,6 +80,8 @@ func (h *Handlers) Liveness(ctx context.Context, w http.ResponseWriter, r *http.
 		Namespace:  os.Getenv("KUBERNETES_NAMESPACE"),
 		GOMAXPROCS: os.Getenv("GOMAXPROCS"),
 	}
+
+	h.log.Infow("liveness", "status", "OK")
 
 	// This handler provides a free timer loop.
 	// This is gonna get called on whatever interval you specify, instead of adding go routines that run on timers and
