@@ -33,7 +33,7 @@ func genToken() error {
 	}{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "1234",
-			Issuer:    "service project",
+			Issuer:    "URL-Shortener",
 			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(8760 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		},

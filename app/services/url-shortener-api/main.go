@@ -72,7 +72,7 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 		Auth struct {
 			KeysFolder string `conf:"default:../../../zarf/keys/"`
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
-			Issuer     string `conf:"default:service project"`
+			Issuer     string `conf:"default:URL-Shortener"`
 		}
 	}{
 		Version: conf.Version{
@@ -122,6 +122,7 @@ func run(ctx context.Context, log *zap.SugaredLogger) error {
 	authCfg := auth.Config{
 		Log:       log,
 		KeyLookup: ks,
+		Issuer:    cfg.Auth.Issuer,
 	}
 
 	auth, err := auth.New(authCfg)
