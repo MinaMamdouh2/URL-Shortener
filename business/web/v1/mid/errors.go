@@ -6,6 +6,7 @@ import (
 
 	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/auth"
 	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/response"
+	"github.com/MinaMamdouh2/URL-Shortener/foundation/validate"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
 	"go.uber.org/zap"
 )
@@ -34,6 +35,20 @@ func Errors(log *zap.SugaredLogger) web.Middleware {
 
 				// The GetError will bring me back the concrete value so we can inspect it.
 				reqErr := response.GetError(err)
+
+				// Is this a data validation issue?, and if it was then we wanna send the fields information.
+				if validate.IsFieldErrors(reqErr.Err) {
+					// Unwrap & return the concrete slice data
+					fieldErrors := validate.GetFieldErrors(reqErr.Err)
+					er = response.ErrorDocument{
+						Error: "data validation error",
+						// Return the value as map so we can marshal it
+						Fields: fieldErrors.Fields(),
+					}
+					status = reqErr.Status
+					break
+				}
+
 				// Here we technically say we blindly trust the messaging coming back here.
 				// Basically What the handler send we will respond with it back to the client.
 				er = response.ErrorDocument{
