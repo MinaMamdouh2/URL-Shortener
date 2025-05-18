@@ -1,0 +1,4 @@
+// core business package is the real package solving the business problem,
+// and these core packages define the different domains of data that we are managing.
+// If we define a package under core, that means we are defining a domain of data that lives together,
+// that works together that can be consumed together and we assume that it has it's own DB.
