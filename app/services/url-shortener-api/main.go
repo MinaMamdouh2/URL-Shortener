@@ -1,3 +1,6 @@
+// Bill's wisdom, "We don't make things easy to do, we make things easy to understand.
+// We wanna code smarter for the production problem and for a change."
+// package main is the entry point for url-shortener-api service
 package main
 
 import (
