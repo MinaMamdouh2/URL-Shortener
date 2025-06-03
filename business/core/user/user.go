@@ -3,11 +3,14 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"net/mail"
+	"time"
 
 	"github.com/MinaMamdouh2/URL-Shortener/business/data/order"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Storer interface declares the behavior this package needs to persists and retrieve data.
@@ -62,5 +65,30 @@ func NewCore(log *zap.SugaredLogger, storer Storer) *Core {
 // We return User as a value because we represent that user data.
 // Also User is value semantics because it represents pure data.
 func (c *Core) Create(ctx context.Context, nu NewUser) (User, error) {
+	// bcrypt to generate hash
+	hash, err := bcrypt.GenerateFromPassword([]byte(nu.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return User{}, fmt.Errorf("generatefrompassword: %w", err)
+	}
+
+	// This will be the createdAt time
+	now := time.Now()
+
+	usr := User{
+		ID:           uuid.New(),
+		Name:         nu.Name,
+		Email:        nu.Email,
+		Roles:        nu.Roles,
+		PasswordHash: hash,
+		Enabled:      true,
+		DateCreated:  now,
+		DateUpdated:  now,
+	}
+
+	if err := c.storer.Create(ctx, usr); err != nil {
+		return User{}, fmt.Errorf("create user: %w", err)
+	}
+
 	return User{}, nil
 }
