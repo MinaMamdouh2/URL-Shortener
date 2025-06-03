@@ -27,14 +27,14 @@ import (
 // models are not what get marshaled and unmarshaled.
 
 type User struct {
-	ID           uuid.UUID
-	Name         string
-	Email        mail.Address
-	Roles        []Role
-	PasswordHash []byte
-	Enabled      bool
-	DateCreated  time.Time
-	DateUpdated  time.Time
+	ID           uuid.UUID    `gorm:"column:id;type:uuid;primaryKey"`
+	Name         string       `gorm:"column:name"`
+	Email        mail.Address `gorm:"column:email"`
+	Roles        []Role       `gorm:"column:roles;type:text[]"` // TODO: Look into pq.StringArray to replace []Role
+	PasswordHash []byte       `gorm:"column:password_has"`
+	Enabled      bool         `gorm:"column:enabled"`
+	DateCreated  time.Time    `gorm:"column:date_created"`
+	DateUpdated  time.Time    `gorm:"column:date_updated"`
 }
 
 // NewUser contains information needed to create a new user.
