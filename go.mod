@@ -4,6 +4,7 @@ go 1.24.1
 
 require (
 	github.com/ardanlabs/conf/v3 v3.7.2
+	github.com/ardanlabs/darwin/v3 v3.3.1
 	github.com/arl/statsviz v0.6.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/locales v0.14.1
