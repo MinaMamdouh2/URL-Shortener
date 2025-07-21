@@ -39,3 +39,7 @@ load:
 # ==============================================================================
 generate-token:
 	go run app\tooling\token\main.go
+
+# ==============================================================================
+init-migrate:
+	go run app\tooling\migration\main.go
