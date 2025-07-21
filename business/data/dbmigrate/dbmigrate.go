@@ -22,6 +22,7 @@ import (
 	"github.com/ardanlabs/darwin/v3"
 	"github.com/ardanlabs/darwin/v3/dialects/postgres"
 	"github.com/ardanlabs/darwin/v3/drivers/generic"
+	_ "github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -55,6 +56,11 @@ func Migrate(ctx context.Context, db *gorm.DB) error {
 	if err != nil {
 		return fmt.Errorf("construct darwin driver: %w", err)
 	}
+	migrations := darwin.ParseMigrations(migrateDoc)
+	fmt.Printf("Parsed %d migrations\n", len(migrations))
+	for _, m := range migrations {
+		fmt.Printf("Version: %f, Description: %s\n", m.Version, m.Description)
+	}
 	// Here ask darwin to read the migration file, parse it into a set of objects that "New" knows how to read against
 	// the driver we are going to be using for the DB
 	d := darwin.New(driver, darwin.ParseMigrations(migrateDoc))
@@ -82,19 +88,23 @@ func Seed(ctx context.Context, db *gorm.DB) (err error) {
 	// We do defer rollback, if a commit is already happened then the rollback is ignored, but if the commit hasn't happened
 	// then we will end up being able to rollback
 	defer func() {
-		if rbErr := tx.Rollback().Error; rbErr != nil {
-			if errors.Is(rbErr, gorm.ErrInvalidTransaction) {
-				return
+		if err != nil {
+			if rbErr := tx.Rollback().Error; rbErr != nil {
+				if errors.Is(rbErr, sql.ErrTxDone) {
+					return
+				}
+				err = fmt.Errorf("rollback error: %w", rbErr)
 			}
-			err = fmt.Errorf("rollback error: %w", rbErr)
 		}
+
 	}()
 	// Execute everything in the seed doc
-	if err := tx.Exec(seedDoc).Error; err != nil {
+	if err = tx.Exec(seedDoc).Error; err != nil {
 		return fmt.Errorf("exec: %w", err)
 	}
+
 	// Commit it
-	if err := tx.Commit().Error; err != nil {
+	if err = tx.Commit().Error; err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
 
@@ -120,20 +130,22 @@ func SeedCustom(ctx context.Context, db *gorm.DB, seedDoc string) (err error) {
 	}
 
 	defer func() {
-		if errTx := tx.Rollback().Error; errTx != nil {
-			if errors.Is(errTx, sql.ErrTxDone) {
+		if err != nil {
+			if errTx := tx.Rollback().Error; errTx != nil {
+				if errors.Is(errTx, sql.ErrTxDone) {
+					return
+				}
+				err = fmt.Errorf("rollback: %w", errTx)
 				return
 			}
-			err = fmt.Errorf("rollback: %w", errTx)
-			return
 		}
 	}()
 
-	if err := tx.Exec(seedDoc).Error; err != nil {
+	if err = tx.Exec(seedDoc).Error; err != nil {
 		return fmt.Errorf("exec: %w", err)
 	}
 
-	if err := tx.Commit().Error; err != nil {
+	if err = tx.Commit().Error; err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
 
