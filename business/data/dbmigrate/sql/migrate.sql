@@ -1,13 +1,14 @@
--- Version: 1.01
+-- Version: 1.1
 -- Description: Create table users
+
 CREATE TABLE users (
-    id UUID NOT NULL,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    roles TEXT [] NOT NULL,
-    password_hash TEXT NOT NULL,
-    enabled BOOLEAN NOT NULL,
-    date_created TIMESTAMP NOT NULL,
-    date_updated TIMESTAMP NOT NULL,
-    PRIMARY KEY (id)
+	id       UUID,
+	name          TEXT,
+	email         TEXT UNIQUE,
+	roles         TEXT[],
+	password_hash TEXT,
+	date_created  TIMESTAMP,
+	date_updated  TIMESTAMP,
+
+	PRIMARY KEY (id)
 );

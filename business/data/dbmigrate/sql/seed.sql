@@ -4,7 +4,6 @@ INSERT INTO users (
             email,
             roles,
             password_hash,
-            enabled,
             date_created,
             date_updated
     )
@@ -14,7 +13,6 @@ VALUES (
         'admin@example.com',
         '{ADMIN,USER}',
         '$2a$10$1ggfMVZV6Js0ybvJufLRUOWHS5f6KneuP0XwwHpJ8L8ipdry9f2/a',
-        true,
         '2019-03-24 00:00:00',
         '2019-03-24 00:00:00'
     ),
@@ -24,7 +22,6 @@ VALUES (
         'user@example.com',
         '{USER}',
         '$2a$10$9/XASPKBbJKVfCAZKDH.UuhsuALDr5vVm6VrYA9VFR8rccK86C1hW',
-        true,
         '2019-03-24 00:00:00',
         '2019-03-24 00:00:00'
     ) ON CONFLICT DO NOTHING;
