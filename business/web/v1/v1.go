@@ -7,6 +7,7 @@ import (
 	"github.com/MinaMamdouh2/URL-Shortener/business/web/v1/mid"
 	"github.com/MinaMamdouh2/URL-Shortener/foundation/web"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 // Config contains all the mandatory systems required by handlers.
@@ -19,6 +20,7 @@ type APIMuxConfig struct {
 	// Passing by pointer ensures we are sharing the same logger instance across the app.
 	Log  *zap.SugaredLogger
 	Auth *auth.Auth
+	DB   *gorm.DB
 }
 
 // RouteAdder defines behavior that sets the routes to bind for an instance
